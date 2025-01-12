@@ -20,6 +20,11 @@ import os
 import urllib.request
 # import warnings
 import pickle
+import imageio.v2 as imageio
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.pyplot as plt
+from matplotlib.colors import BoundaryNorm
 
 
 # =============================================================================
@@ -789,3 +794,162 @@ def CanadianModels(Latitude, Longitude, Code):
 # =============================================================================
 # 
 # =============================================================================
+
+def ECRadarGetter(Radar):
+    
+    Today = datetime.today().strftime('%Y-%m-%d')
+    TodayAlt = Today.replace('-', '')
+    
+    # URL of the data center
+    URL = f'https://dd.weather.gc.ca/{TodayAlt}/WXO-DD/radar/DPQPE/GIF/{Radar}/'
+    # List to hold image file names
+    Files = []
+    # Read into HTML format
+    html = request.urlopen(URL).read()
+    # Parse HTML
+    soup = BeautifulSoup(html,'html.parser')
+    # Convert to list
+    Lines = list(str(soup).split('\n'))
+    for l in range(len(Lines)):
+        # Take only rain for now
+        if 'Rain.gif' in Lines[l]:
+            # Get the URL part only
+            Stamp = re.findall('"([^"]*)"', Lines[l])[2]
+            # Assume 5 hr difference with UTC
+            Hr = int(Stamp[9:11])
+            if Hr > 5:
+                Files.append('Temporary/'+Stamp)
+    
+            # Download
+            urllib.request.urlretrieve(URL+Stamp, 'Temporary/'+Stamp)
+        
+        print(r'Downloading Radar Image {0}'.format(l), end='\r')
+    
+    # Combine images into a GIF
+    with imageio.get_writer(f'Figures/{Radar}_{TodayAlt}.gif',
+                            mode='I', duration=250) as writer:
+        for filename in Files:
+            image = imageio.imread(filename)
+            writer.append_data(image)
+    
+    # Delete all the images
+    for filename in os.listdir('Temporary'):
+        os.remove('Temporary/'+filename)
+
+    return
+
+
+# =============================================================================
+# 
+# =============================================================================
+
+def HRDPSRainGetter(RadName, RadLat, RadLon):
+    
+    # Today's date
+    Today = datetime.today().strftime('%Y-%m-%d')
+    TodayAlt = Today.replace('-', '')
+    
+    # Yesterday's date
+    Date = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+    Date2 = Date.replace('-', '')
+    
+    # Url from the datamart
+    URL = f'https://dd.weather.gc.ca/{Date2}/WXO-DD/model_hrdps/continental/2.5km/18/'
+    # File name style
+    Filenames = '*HRDPS_PRATE*.grib2'
+    # Hours to get data for
+    fxxs = np.arange(12, 36)
+    
+    for x in fxxs:
+        # Define the string of the model step
+        strfxstep = str(x)
+        if len(strfxstep) == 1:
+            fxstep = f'00{strfxstep}'
+        if len(strfxstep) == 2:
+            fxstep = f'0{strfxstep}'
+        if len(strfxstep) == 3:
+            fxstep = strfxstep
+        
+        # The filename
+        PRate = f'{Date2}T18Z_MSC_HRDPS_PRATE_Sfc_RLatLon0.0225_PT{fxstep}H.grib2'
+        
+        # Download all the grib files
+        urllib.request.urlretrieve(URL+fxstep+'/'+PRate, 'Temporary/'+PRate)
+    
+        print(r'Downloading HRDPS Hour {0}'.format(x), end='\r')
+    
+    print('')
+    print('Loading HRDPS files...')
+    # List of all the filenames by variable
+    PFiles = glob.glob(f"Temporary/{Filenames}")
+    
+    # Load the dataset
+    dsP = xr.open_mfdataset(PFiles, engine='cfgrib', 
+                             combine='nested', concat_dim='step')
+    
+    # Get latitude, longitude, and convert initial values
+    Lats = dsP.latitude.values
+    Lons = dsP.longitude.values
+    Pras = dsP.prate.values*86400
+    Pras[Pras == 0] = np.nan
+    
+    # Province borders, from sienna22 on stack exchange
+    states_provinces = cfeature.NaturalEarthFeature(category='cultural', 
+            name='admin_1_states_provinces_lines', scale='50m', facecolor='none')
+    
+    # Value levels more or less matching ECCC radar plots
+    Levels = np.array([0, 0.1, 1, 2, 5, 10, 25, 50, 100, 200, 300])
+    
+    
+    # Approximate deltas from RadLon, RadLat to get the plot extent
+    NoSo = 250/110
+    EaWe = 330/110
+    
+    # Create a discretized colormap based on 'jet'
+    cmap = plt.cm.get_cmap('jet', len(Levels)+1)
+    # Match levels to the colormap
+    norm = BoundaryNorm(Levels, cmap.N, extend='both')
+    # List to hold the filenames of the images
+    Filenames = []
+    
+    for x in range(Pras.shape[0]):
+    
+        Fig = plt.figure(figsize=(5.8, 4.8), dpi=100)
+        ax = plt.axes(projection=ccrs.PlateCarree())
+        ax.set_title(str(dsP.valid_time.values[x]).split('T')[1][:5] + ' UTC')
+        ax.set_extent([RadLon-EaWe, RadLon+EaWe, RadLat-NoSo, RadLat+NoSo])
+        ax.coastlines()
+        ax.add_feature(cfeature.BORDERS)
+        ax.add_feature(states_provinces, edgecolor='black', linestyle='dashed')
+        
+        rain = ax.contourf(Lons, Lats, Pras[x]/24, cmap=cmap, levels=Levels, norm=norm, extend='both')
+        
+        ax.add_feature(cfeature.LAKES, edgecolor='k', linewidth=0.3)
+        
+        ax.scatter(-73.579185, 45.504926, marker='*', edgecolor='k', 
+                   facecolor='red', s=200, zorder=10)
+        
+        ax.scatter(RadLon, RadLat, marker='+', color='grey', s=200, zorder=10)
+            
+        cbar = Fig.colorbar(rain, ax=ax, orientation='vertical', location='right',
+                              fraction=0.1, pad=0.05, shrink=0.75, ticks=Levels)
+        cbar.set_label('Precipitation Rate [mm/hr]',
+                        fontsize=12)
+        
+        plt.tight_layout()
+        plt.savefig(f'Temporary/Hrdps_{TodayAlt}_{x+1}_Rain.png')
+        Filenames.append(f'Temporary/Hrdps_{TodayAlt}_{x+1}_Rain.png')
+        plt.close()    
+    
+    # Combine images into a GIF
+    with imageio.get_writer(f'Figures/HRDPS_{RadName}_{TodayAlt}.gif',
+                            mode='I', duration=250) as writer:
+        for filename in Filenames:
+            image = imageio.imread(filename)
+            writer.append_data(image)
+    
+    # Delete all the files and images
+    for filename in os.listdir('Temporary'):
+        os.remove('Temporary/'+filename)
+        
+    return

@@ -8,21 +8,10 @@ Created on Sun Dec 15 10:38:58 2024
 import loadfuncs as fx
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from windrose import WindroseAxes, plot_windrose
-# from urllib import request
-# # import json
-# from bs4 import BeautifulSoup
-# import re
-# import xmltodict
 import pickle
-# import xarray as xr
-# from herbie import Herbie
-# import urllib.request
-# import os
-# import glob
 
 # =============================================================================
 # 
@@ -34,9 +23,10 @@ import pickle
 # beautifulsoup
 # xmltodict
 # cfgrib
+# imageio
 
 # To do:
-# x) What the fuck is wrong with this precipitation data?
+# x) What is wrong with this precipitation data?
 
 # MCTAVISH	71612	7024745	45.504926	-73.579185	72.583 CWTA
 
@@ -57,6 +47,9 @@ Longitude = -73.579185
 Code = 'CWTA'
 Name = 'McTavish'
 UTC = 5
+RadName = 'CASBV'
+RadLat = 45.70628
+RadLon = -73.85892
 
 Today = datetime.today().strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')
@@ -170,6 +163,9 @@ ax22.legend()
 plt.tight_layout()
 plt.savefig(f'Figures/Wind_{Code}_{Today2}.png')
 plt.close()
+
+fx.ECRadarGetter(RadName)
+fx.HRDPSRainGetter(RadName, RadLat, RadLon)
 
 
 # # Clean precipitation data before plotting
