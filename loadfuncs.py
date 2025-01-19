@@ -5,6 +5,7 @@ Created on Mon Oct 14 15:00:35 2024
 @author: dundu
 """
 
+import eccodes
 from urllib import request
 import json
 from bs4 import BeautifulSoup
@@ -584,7 +585,8 @@ def ECStationData(Code):
             ObsData.append([Time, TempC, WindS, WindD, PrecT])
             
             print(r'{0}'.format(t), end='\r')
-
+    
+    print('')
     ObsData = pd.DataFrame(ObsData, columns=['Time', 'Temperature [C]',
                                              'Wind Speed [m/s]', 
                                              'Wind Direction [deg]',
@@ -722,7 +724,7 @@ def CanadianModels(Latitude, Longitude, Code):
         
             print(r'Downloading {0} Hour {1}'.format(m, x), end='\r')
 
-        
+        print('')
         print(f'Loading {m} files...')
         # Lists of all the filenames by variable
         TFiles = glob.glob(f"Temporary/{Filenames[m]['T']}")
@@ -825,6 +827,7 @@ def ECRadarGetter(Radar):
         
         print(r'Downloading Radar Image {0}'.format(l), end='\r')
     
+    print('')
     # Combine images into a GIF
     with imageio.get_writer(f'Figures/{Radar}_{TodayAlt}.gif',
                             mode='I', duration=250) as writer:

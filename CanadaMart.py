@@ -24,6 +24,8 @@ import pickle
 # xmltodict
 # cfgrib
 # imageio
+# xarray 2024.07.0
+# eccodes
 
 # To do:
 # x) What is wrong with this precipitation data?
@@ -51,6 +53,7 @@ RadName = 'CASBV'
 RadLat = 45.70628
 RadLon = -73.85892
 
+
 Today = datetime.today().strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')
 Yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
@@ -69,7 +72,7 @@ try:
     File = open(f'Data/EC_ModelData/ECMods_{Code}_{Today2}.pickle', 'rb')
     # Dump information
     ECData = pickle.load(File)
-    # close the file
+    # Close the file
     File.close()
 except:
     # If not, load 'em up
@@ -81,7 +84,7 @@ try:
     File = open(f'Data/US_ModelData/USMods_{Code}_{Today2}.pickle', 'rb')
     # Dump information
     USData = pickle.load(File)
-    # close the file
+    # Close the file
     File.close()
 except:
     # If not, fire up the ol' Herb-a-derb
@@ -168,25 +171,25 @@ fx.ECRadarGetter(RadName)
 fx.HRDPSRainGetter(RadName, RadLat, RadLon)
 
 
-# # Clean precipitation data before plotting
-# ObsData['Precipitation [mm]'][ObsData['Precipitation [mm]'] < 0] = 0
+# Clean precipitation data before plotting
+ObsData['Precipitation [mm]'][ObsData['Precipitation [mm]'] < 0] = 0
 
-# Fig3 = plt.figure(figsize=(14,8))
-# Fig3.suptitle(f'Precipitation at {Name}, {Today}\n Models Initialized Yesterday at 18Z or 12Z', fontsize=15)
-# ax3 = Fig3.subplots()
+Fig3 = plt.figure(figsize=(14,8))
+Fig3.suptitle(f'Precipitation at {Name}, {Today}\n Models Initialized Yesterday at 18Z or 12Z', fontsize=15)
+ax3 = Fig3.subplots()
 
-# ax3.plot(ObsData['Precipitation [mm]'], label='Obs', c='k', linewidth=2)
+ax3.plot(ObsData['Precipitation [mm]'], label='Obs', c='k', linewidth=2)
 
-# for m in ECData.keys():
-#     ax3.plot(ECData[m]['Precipitation [mm]'], label=m.upper(), linewidth=1.5)
+for m in ECData.keys():
+    ax3.plot(ECData[m]['Precipitation [mm]'], label=m.upper(), linewidth=1.5)
 
-# for m in USModels:
-#     if USData[m.split()[0]].size != 0:
-#         ax3.plot(USData[m.split()[0]]['Precipitation [mm]'], 
-#                  label=m.split()[0].upper(), linewidth=1.5)
+for m in USModels:
+    if USData[m.split()[0]].size != 0:
+        ax3.plot(USData[m.split()[0]]['Precipitation [mm]'], 
+                 label=m.split()[0].upper(), linewidth=1.5)
 
-# ax3.xaxis.set_major_formatter(myFmt1)
-# ax3.legend(prop={'size':15}, ncols=2)
-# ax3.set_xlabel('Time [Local, DD HH]', fontsize=15)
-# ax3.set_ylabel('Precipitation [mm]', fontsize=15)
-# plt.tight_layout()
+ax3.xaxis.set_major_formatter(myFmt1)
+ax3.legend(prop={'size':15}, ncols=2)
+ax3.set_xlabel('Time [Local, DD HH]', fontsize=15)
+ax3.set_ylabel('Precipitation [mm]', fontsize=15)
+plt.tight_layout()
