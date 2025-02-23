@@ -5,8 +5,9 @@ Created on Mon Oct 14 15:00:35 2024
 @author: dundu
 """
 
-import eccodes
+# import eccodes
 from urllib import request
+import shutil
 import json
 from bs4 import BeautifulSoup
 import numpy as np
@@ -26,6 +27,70 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm
+import PIL
+from PIL import Image
+
+
+# =============================================================================
+# 
+# =============================================================================
+
+def SundayCleaning(WholeDate):
+    # If Sunday, delete all data (no reason to keep and small storage anyway)
+    DayName = WholeDate.weekday() # 6 is Sunday
+    DayHour = WholeDate.hour
+    
+    Folders = ['Figures', 'Temporary', 'Data/EC_ModelData', 'Old Figures',
+               'Data/EC_StationData', 'Data/US_ModelData']
+    
+    if (DayName == 6) and (DayHour < 9):
+        for fold in Folders:
+            files = glob.glob('{fold}/*')
+            for f in files:
+                os.remove(f)
+
+
+def MoveYesterdaysPlots(Today2):
+    
+    # Get the names of the files in the Figures folder
+    Filenames = os.listdir('Figures')
+    # Huh, I think I can just compare them as integers
+    for f in Filenames:
+        # Get the associated date
+        Date = f[-12:-4]
+        if int(Today2) > int(Date):
+            shutil.move(f'Figures/{f}', 'Old Figures')
+
+    return
+
+
+def MeanTandW(ECData, USData):
+    
+    # Calculate model mean
+    AllData = ECData | USData
+    # Remove empty datasets
+    Bad = []
+    for d in AllData.keys():
+        if AllData[d].shape[0] == 0:
+            Bad.append(d)
+    for b in Bad:
+        AllData.pop(b)
+    
+    # At this point I'm sitting half on the floor - don't care if not efficient
+    Tempos = []
+    Winds = []
+    # Get the mean temperature and wind speed
+    for d in AllData.keys():
+        Tempos.append(AllData[d]['Temperature [C]'])
+        Winds.append(AllData[d]['Wind Speed [m/s]'])
+    
+    TFrame = (pd.DataFrame(Tempos).T).interpolate()
+    WFrame = (pd.DataFrame(Winds).T).interpolate()
+    
+    TMean = TFrame.mean(axis=1)
+    WMean = WFrame.mean(axis=1)
+    
+    return TMean, WMean
 
 
 # =============================================================================
@@ -632,15 +697,17 @@ def ECDataChecker():
     for m in YesterLinks.keys():
         # for t in Links[m][1]:
         # Read into HTML format
-        html = request.urlopen(YesterLinks[m]).read()
-        # Parse HTML
-        soup = BeautifulSoup(html,'html.parser')
-        # Convert to... list?
-        Lines = list(str(soup).split('\n'))
-        # Basic check: an empty HRDPS folder had 13 lines.
-        if len(Lines) > 13:
-            Hours[m] = YesterLinks[m][-7:-5]
-                # break
+        try:
+            html = request.urlopen(YesterLinks[m]).read()
+            # Parse HTML
+            soup = BeautifulSoup(html,'html.parser')
+            # Convert to... list?
+            Lines = list(str(soup).split('\n'))
+            # Basic check: an empty HRDPS folder had 13 lines.
+            if len(Lines) > 13:
+                Hours[m] = YesterLinks[m][-7:-5]
+        except:
+            print(f'{m} is missing data.')
 
     return Hours
 
@@ -731,7 +798,7 @@ def CanadianModels(Latitude, Longitude, Code):
         UFiles = glob.glob(f"Temporary/{Filenames[m]['U']}")
         VFiles = glob.glob(f"Temporary/{Filenames[m]['V']}")
         PFiles = glob.glob(f"Temporary/{Filenames[m]['P']}")
-        
+                
         # Load the datasets
         dsT = xr.open_mfdataset(TFiles, engine='cfgrib', 
                                  combine='nested', concat_dim='step')
@@ -828,9 +895,24 @@ def ECRadarGetter(Radar):
         print(r'Downloading Radar Image {0}'.format(l), end='\r')
     
     print('')
+    
+    NewWidth = 800
+    
+    print('Resizing...')
+    # Resize all the images
+    for filename in Files:
+        # Stolen from https://gist.github.com/tomvon/ae288482869b495201a0
+        img = Image.open(filename)
+        wpercent = (NewWidth/float(img.size[0]))
+        hsize = int((float(img.size[1])*float(wpercent)))
+        img = img.resize((NewWidth, hsize), PIL.Image.BICUBIC)
+        img.save(filename)
+    
+    print('')
+    
     # Combine images into a GIF
     with imageio.get_writer(f'Figures/{Radar}_{TodayAlt}.gif',
-                            mode='I', duration=250) as writer:
+                            mode='I', duration=100) as writer:
         for filename in Files:
             image = imageio.imread(filename)
             writer.append_data(image)
@@ -841,6 +923,8 @@ def ECRadarGetter(Radar):
 
     return
 
+# wpercent = (800/float(580))
+# hsize = int((float(480)*float(wpercent)))
 
 # =============================================================================
 # 
@@ -895,7 +979,8 @@ def HRDPSRainGetter(RadName, RadLat, RadLon):
     Lons = dsP.longitude.values
     Pras = dsP.prate.values*86400
     Pras[Pras == 0] = np.nan
-    
+    Timestamps = pd.to_datetime(dsP.valid_time.values - pd.to_timedelta(5, unit='h'))
+
     # Province borders, from sienna22 on stack exchange
     states_provinces = cfeature.NaturalEarthFeature(category='cultural', 
             name='admin_1_states_provinces_lines', scale='50m', facecolor='none')
@@ -917,9 +1002,10 @@ def HRDPSRainGetter(RadName, RadLat, RadLon):
     
     for x in range(Pras.shape[0]):
     
-        Fig = plt.figure(figsize=(5.8, 4.8), dpi=100)
+        Fig = plt.figure(figsize=(8.0, 6.62), dpi=100)
         ax = plt.axes(projection=ccrs.PlateCarree())
-        ax.set_title(str(dsP.valid_time.values[x]).split('T')[1][:5] + ' UTC')
+        ax.set_title(f"{Timestamps[x].strftime('%Y-%m-%d %H:00')} LT", fontsize=15)
+        # ax.set_title(str(dsP.valid_time.values[x]).split('T')[1][:5] + ' UTC')
         ax.set_extent([RadLon-EaWe, RadLon+EaWe, RadLat-NoSo, RadLat+NoSo])
         ax.coastlines()
         ax.add_feature(cfeature.BORDERS)
