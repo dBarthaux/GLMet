@@ -44,8 +44,9 @@ def SundayCleaning(WholeDate):
                'Data/EC_StationData', 'Data/US_ModelData']
     
     if (DayName == 6) and (DayHour < 9):
+        print("It's SUNDAY SUNDAY SUNDAY!")
         for fold in Folders:
-            files = glob.glob('{fold}/*')
+            files = glob.glob(f'{fold}/*')
             for f in files:
                 os.remove(f)
 
