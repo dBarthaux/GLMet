@@ -13,6 +13,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 from windrose import WindroseAxes, plot_windrose
 import pickle
+import random
+
+Pearls = open('PearlsofWisdom.txt').read().splitlines()
 
 # =============================================================================
 # 
@@ -48,6 +51,8 @@ RadLat = 45.70628
 RadLon = -73.85892
 
 WholeDate = datetime.today()
+
+os.system(f'powershell.exe write-host -fore Cyan {random.choice(Pearls)}')
 
 Today = WholeDate.strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')
