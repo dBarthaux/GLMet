@@ -451,7 +451,7 @@ VarDict = {'gfs':[":TMP:2 m above ground:", ":[U|V]GRD:10 m above ground:", ":AP
            'ecmwf':[":2t:", ":10[u|v]:", ":tp:"],
            'gefs':[":TMP:2 m above ground:", ":[U|V]GRD:10 m above ground:", ":APCP:surface:"]}
 
-def ModelOutput(Models, Date, Latitude, Longitude, Code, units=0):
+def ModelOutput(Models, Date, Latitude, Longitude, Code, UTC, units=0):
     
     # List of models currently included:
     # NAM, GFS, HRRR, NBM, ECMWF, GEFS
@@ -476,12 +476,22 @@ def ModelOutput(Models, Date, Latitude, Longitude, Code, units=0):
         Hour = Name.split()[1] + ':00'
         
         if int(Name.split()[1]) == 18:
-            StartHour = 12
-            FinHour = 36
+            if UTC == 5:
+                StartHour = 12
+                FinHour = 36
+                
+            if UTC == 4:
+                StartHour = 11
+                FinHour = 35
             
         if int(Name.split()[1]) == 12:
-            StartHour = 18
-            FinHour = 42
+            if UTC == 5:
+                StartHour = 18
+                FinHour = 42
+            
+            if UTC == 4:
+                StartHour = 17
+                FinHour = 41
         
         ConvDate = [pd.to_datetime(Date + f' {Hour}')]
         
@@ -720,7 +730,7 @@ def ECDataChecker():
 # 
 # =============================================================================
 
-def CanadianModels(Latitude, Longitude, Code):
+def CanadianModels(Latitude, Longitude, Code, UTC):
 
     # Set latitude and longitude
     Point = pd.DataFrame({'longitude': [Longitude],
@@ -749,8 +759,15 @@ def CanadianModels(Latitude, Longitude, Code):
 
     # Check which ones have data
     Cycles = ECDataChecker()
+    
+    if UTC == 5:
+        fxxs = {'rdps':np.arange(12, 36), 'gdps':np.arange(18, 42, 3),
+                'hrdps':np.arange(12, 36)}
 
-    fxxs = {'rdps':np.arange(12, 36), 'gdps':np.arange(18, 42, 3), 'hrdps':np.arange(12, 36)}
+    if UTC == 4:
+        fxxs = {'rdps':np.arange(11, 35), 'gdps':np.arange(17, 41, 3),
+                'hrdps':np.arange(11, 35)}
+
 
     for m in Everything.keys():
         if Cycles[m] == 'ZZ':

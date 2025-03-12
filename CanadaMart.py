@@ -59,7 +59,7 @@ if Tzone == 'Eastern Standard Time':
 
 WholeDate = datetime.today()
 
-os.system(f'powershell.exe write-host -fore Cyan {random.choice(Pearls)}')
+# os.system(f'powershell.exe write-host -fore Cyan {random.choice(Pearls)}')
 
 Today = WholeDate.strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')
@@ -86,7 +86,7 @@ try:
     File.close()
 except:
     # If not, load 'em up
-    ECData = fx.CanadianModels(Latitude, Longitude, Code)
+    ECData = fx.CanadianModels(Latitude, Longitude, Code, UTC)
     
 # Get American/Other data
 try:
@@ -99,7 +99,7 @@ try:
 except:
     # If not, fire up the ol' Herb-a-derb
     USData = fx.ModelOutput(USModels, Yesterday, Latitude, 
-                            Longitude, Code, units=1)
+                            Longitude, Code, UTC, units=1)
 
 
 # Convert time from UTC to Montreal Local
@@ -116,11 +116,11 @@ for m in ToRemove:
 
 for m in ECData.keys():
     ECData[m].index = pd.to_datetime(ECData[m].index)
-    ECData[m].index = ECData[m].index - pd.to_timedelta(UTC+2, unit='h')
+    ECData[m].index = ECData[m].index - pd.to_timedelta(UTC, unit='h')
 
 for m in USData.keys():
     if USData[m].shape[0] > 0:
-        USData[m].index = USData[m].index - pd.to_timedelta(UTC+2, unit='h')
+        USData[m].index = USData[m].index - pd.to_timedelta(UTC, unit='h')
 
 
 # Get the mean temperature and wind of all the models
