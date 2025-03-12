@@ -31,6 +31,9 @@ import PIL
 from PIL import Image
 
 
+EST = 5
+EDT = 4
+
 # =============================================================================
 # 
 # =============================================================================
@@ -567,7 +570,7 @@ def ModelOutput(Models, Date, Latitude, Longitude, Code, units=0):
 # 
 # =============================================================================
 
-def ECStationData(Code):
+def ECStationData(Code, UTC):
     
     # Today's date
     Today1 = datetime.today().strftime('%Y-%m-%d')
@@ -606,7 +609,7 @@ def ECStationData(Code):
 
     # Check if it's tomorrow yet (don't think about this sentence too hard)
     TimeNow = datetime.today().hour
-    if TimeNow < 19:
+    if TimeNow < 24 - UTC:
         # If not after 7pm in Montreal, tomorrow hasn't happened yet
         del Sources['Tomorrow']
 
@@ -624,13 +627,13 @@ def ECStationData(Code):
             if Sources[s][0] in l:
                 Stamp = re.findall('"([^"]*)"', l)[2]
                 if ('minute' in Stamp) and (Stamp not in OrgFile['URL'].values):
-                    # Get UTC time, 5 hour difference
+                    # Get UTC time, 4 or 5 hour difference
                     Hr = int(l[64:66])
-                    if (s == 'Tomorrow') and (Hr < 5):
+                    if (s == 'Tomorrow') and (Hr < UTC):
                         Timestamps.append(Stamp)
                         AllStamps.append(Stamp)
                         
-                    if (s == 'Today') and (Hr >= 5):
+                    if (s == 'Today') and (Hr >= UTC):
                         Timestamps.append(Stamp)
                         AllStamps.append(Stamp)
 

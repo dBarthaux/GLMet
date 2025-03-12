@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from windrose import WindroseAxes, plot_windrose
 import pickle
 import random
+import time
 
 Pearls = open('PearlsofWisdom.txt').read().splitlines()
 
@@ -45,10 +46,16 @@ Latitude = 45.504926
 Longitude = -73.579185
 Code = 'CWTA'
 Name = 'McTavish'
-UTC = 5
 RadName = 'CASBV'
 RadLat = 45.70628
 RadLon = -73.85892
+
+# Check and get timezone
+Tzone = time.tzname[1]
+if Tzone == 'Eastern Daylight Time':
+    UTC = 4
+if Tzone == 'Eastern Standard Time':
+    UTC == 5
 
 WholeDate = datetime.today()
 
@@ -65,7 +72,7 @@ fx.SundayCleaning(WholeDate)
 USModels = ['hrrr 18', 'gfs 18', 'gefs 18', 'nam 18', 'nbm 12', 'ecmwf 12']
 
 # Get station data
-ObsData = fx.ECStationData(Code)
+ObsData = fx.ECStationData(Code, UTC)
 # Convert data type
 ObsData.iloc[:,:4] = ObsData.iloc[:,:4].astype(float)
 
@@ -98,7 +105,7 @@ except:
 # Convert time from UTC to Montreal Local
 ObsData.index = pd.to_datetime(ObsData.index)
 ToRemove = [] 
-ObsData.index = ObsData.index - pd.to_timedelta(5, unit='h')
+ObsData.index = ObsData.index - pd.to_timedelta(UTC, unit='h')
 for m in ECData.keys():
     if type(ECData[m]) == list:
         ToRemove.append(m)
@@ -109,11 +116,11 @@ for m in ToRemove:
 
 for m in ECData.keys():
     ECData[m].index = pd.to_datetime(ECData[m].index)
-    ECData[m].index = ECData[m].index - pd.to_timedelta(5, unit='h')
+    ECData[m].index = ECData[m].index - pd.to_timedelta(UTC+2, unit='h')
 
 for m in USData.keys():
     if USData[m].shape[0] > 0:
-        USData[m].index = USData[m].index - pd.to_timedelta(5, unit='h')
+        USData[m].index = USData[m].index - pd.to_timedelta(UTC+2, unit='h')
 
 
 # Get the mean temperature and wind of all the models
