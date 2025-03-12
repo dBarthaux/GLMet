@@ -59,7 +59,7 @@ if Tzone == 'Eastern Standard Time':
 
 WholeDate = datetime.today()
 
-# os.system(f'powershell.exe write-host -fore Cyan {random.choice(Pearls)}')
+os.system(f'powershell.exe write-host -fore Cyan {random.choice(Pearls)}')
 
 Today = WholeDate.strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')
@@ -86,7 +86,7 @@ try:
     File.close()
 except:
     # If not, load 'em up
-    ECData = fx.CanadianModels(Latitude, Longitude, Code, UTC)
+    ECData = fx.CanadianModels(Latitude, Longitude, Code)
     
 # Get American/Other data
 try:
@@ -99,7 +99,7 @@ try:
 except:
     # If not, fire up the ol' Herb-a-derb
     USData = fx.ModelOutput(USModels, Yesterday, Latitude, 
-                            Longitude, Code, UTC, units=1)
+                            Longitude, Code, units=1)
 
 
 # Convert time from UTC to Montreal Local
@@ -121,7 +121,9 @@ for m in ECData.keys():
 for m in USData.keys():
     if USData[m].shape[0] > 0:
         USData[m].index = USData[m].index - pd.to_timedelta(UTC, unit='h')
-
+        
+Test = USData['nbm'].copy()
+        
 
 # Get the mean temperature and wind of all the models
 TempMean, WindMean = fx.MeanTandW(ECData, USData)
@@ -135,9 +137,9 @@ Fig1.suptitle(f'{Name}, {Today}; Models Initialized Yesterday at 18Z or 12Z', fo
 ax1 = Fig1.subplots()
 ax1.plot(ObsData['Temperature [C]'], label='Obs', c='k', linewidth=6)
 
-for m in ECData.keys():
-    ax1.plot(ECData[m]['Temperature [C]'], label=m.upper(), linewidth=4,
-             alpha=0.25)
+# for m in ECData.keys():
+#     ax1.plot(ECData[m]['Temperature [C]'], label=m.upper(), linewidth=4,
+#              alpha=0.25)
 
 for m in USModels:
     if USData[m.split()[0]].size != 0:
@@ -156,8 +158,8 @@ ax1.legend(prop={'size':15}, ncols=2)
 ax1.set_xlabel('Time [Local, DD HH]', fontsize=18)
 ax1.set_ylabel('Temperature [C]', fontsize=18)
 plt.tight_layout()
-plt.savefig(f'Figures/Temperature_{Code}_{Today2}.png')
-plt.close()
+# plt.savefig(f'Figures/Temperature_{Code}_{Today2}.png')
+# plt.close()
 
 
 Fig2 = plt.figure(figsize=(19,9.5))
@@ -208,7 +210,7 @@ fx.ECRadarGetter(RadName)
 
 if f'HRDPS_{RadName}_{Today2}.gif' not in os.listdir('Figures'):
     if 'hrdps' in ECData.keys():
-        fx.HRDPSRainGetter(RadName, RadLat, RadLon)
+        fx.HRDPSRainGetter(RadName, RadLat, RadLon, UTC)
 
 
 # # Clean precipitation data before plotting

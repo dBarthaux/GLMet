@@ -451,7 +451,7 @@ VarDict = {'gfs':[":TMP:2 m above ground:", ":[U|V]GRD:10 m above ground:", ":AP
            'ecmwf':[":2t:", ":10[u|v]:", ":tp:"],
            'gefs':[":TMP:2 m above ground:", ":[U|V]GRD:10 m above ground:", ":APCP:surface:"]}
 
-def ModelOutput(Models, Date, Latitude, Longitude, Code, UTC, units=0):
+def ModelOutput(Models, Date, Latitude, Longitude, Code, units=0):
     
     # List of models currently included:
     # NAM, GFS, HRRR, NBM, ECMWF, GEFS
@@ -476,23 +476,13 @@ def ModelOutput(Models, Date, Latitude, Longitude, Code, UTC, units=0):
         Hour = Name.split()[1] + ':00'
         
         if int(Name.split()[1]) == 18:
-            if UTC == 5:
-                StartHour = 12
-                FinHour = 36
-                
-            if UTC == 4:
-                StartHour = 11
-                FinHour = 35
+            StartHour = 9
+            FinHour = 36
             
         if int(Name.split()[1]) == 12:
-            if UTC == 5:
-                StartHour = 18
-                FinHour = 42
-            
-            if UTC == 4:
-                StartHour = 17
-                FinHour = 41
-        
+            StartHour = 15
+            FinHour = 42
+
         ConvDate = [pd.to_datetime(Date + f' {Hour}')]
         
         print(f'Getting {m.upper()} {Hour}Z data...')
@@ -730,7 +720,7 @@ def ECDataChecker():
 # 
 # =============================================================================
 
-def CanadianModels(Latitude, Longitude, Code, UTC):
+def CanadianModels(Latitude, Longitude, Code):
 
     # Set latitude and longitude
     Point = pd.DataFrame({'longitude': [Longitude],
@@ -760,14 +750,8 @@ def CanadianModels(Latitude, Longitude, Code, UTC):
     # Check which ones have data
     Cycles = ECDataChecker()
     
-    if UTC == 5:
-        fxxs = {'rdps':np.arange(12, 36), 'gdps':np.arange(18, 42, 3),
-                'hrdps':np.arange(12, 36)}
-
-    if UTC == 4:
-        fxxs = {'rdps':np.arange(11, 35), 'gdps':np.arange(17, 41, 3),
-                'hrdps':np.arange(11, 35)}
-
+    fxxs = {'rdps':np.arange(9, 36), 'gdps':np.arange(15, 42, 3),
+            'hrdps':np.arange(9, 36)}
 
     for m in Everything.keys():
         if Cycles[m] == 'ZZ':
@@ -951,7 +935,7 @@ def ECRadarGetter(Radar):
 # 
 # =============================================================================
 
-def HRDPSRainGetter(RadName, RadLat, RadLon):
+def HRDPSRainGetter(RadName, RadLat, RadLon, UTC):
     
     # Today's date
     Today = datetime.today().strftime('%Y-%m-%d')
@@ -1000,7 +984,7 @@ def HRDPSRainGetter(RadName, RadLat, RadLon):
     Lons = dsP.longitude.values
     Pras = dsP.prate.values*86400
     Pras[Pras == 0] = np.nan
-    Timestamps = pd.to_datetime(dsP.valid_time.values - pd.to_timedelta(5, unit='h'))
+    Timestamps = pd.to_datetime(dsP.valid_time.values - pd.to_timedelta(UTC, unit='h'))
 
     # Province borders, from sienna22 on stack exchange
     states_provinces = cfeature.NaturalEarthFeature(category='cultural', 
