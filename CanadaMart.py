@@ -13,10 +13,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from windrose import WindroseAxes, plot_windrose
 import pickle
-import random
 import time
-
-Pearls = open('PearlsofWisdom.txt').read().splitlines()
 
 # =============================================================================
 # 
@@ -59,7 +56,7 @@ if Tzone == 'Eastern Standard Time':
 
 WholeDate = datetime.today()
 
-os.system(f'powershell.exe write-host -fore Cyan {random.choice(Pearls)}')
+fx.BearNecessities()
 
 Today = WholeDate.strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')

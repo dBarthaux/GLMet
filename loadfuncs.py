@@ -29,7 +29,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm
 import PIL
 from PIL import Image
-
+import matplotlib.image as mpimg
+import random
 
 EST = 5
 EDT = 4
@@ -1047,3 +1048,71 @@ def HRDPSRainGetter(RadName, RadLat, RadLon, UTC):
         os.remove('Temporary/'+filename)
         
     return
+
+
+# =============================================================================
+# 
+# =============================================================================
+
+def BearNecessities():
+
+    # Replace with the raw URL of the file you want to download
+    file_url = "https://raw.githubusercontent.com/dBarthaux/GLMet/refs/heads/main/PearlsofWisdom.txt"
+    destination_path = "PearlsofWisdom.txt"
+    
+    try:
+        request.urlretrieve(file_url, destination_path)
+        print(f"File downloaded successfully to {destination_path}")
+    except Exception as e:
+        print(f"Error downloading file: {e}")
+    
+    Pearls = open('PearlsofWisdom.txt').read().splitlines()
+    
+    # Define the path to your PNG file
+    image_path1 = 'Bear1.png'
+    image_path2 = 'Bear2.png'
+    
+    # Read the image data
+    img1 = mpimg.imread(image_path1)
+    img2 = mpimg.imread(image_path2)
+
+    # Display the image
+    Fig = plt.figure(figsize=(10,9))
+    ax = Fig.subplots(nrows=1, ncols=2)
+    
+    Left = random.choice(Pearls)
+    Right = random.choice(Pearls)
+    
+    while Right == Left:
+        Right = random.choice(Pearls)
+    
+    Left = Left.split()
+    LeftFinal = ''
+    Chop = 0
+    for i in range(len(Left)):
+        LeftFinal += Left[i] + ' '
+        if i < len(Left)-1:
+            if len(LeftFinal[Chop:] + Left[i+1]) > 50:
+                LeftFinal += '\n'
+                Chop = len(LeftFinal)
+    
+    Right = Right.split()
+    RightFinal = ''
+    Chop = 0
+    for i in range(len(Right)):
+        RightFinal += Right[i] + ' '
+        if i < len(Right)-1:
+            if len(RightFinal[Chop:] + Right[i+1]) > 40:
+                RightFinal += '\n'
+                Chop = len(RightFinal)
+        
+    
+    ax[0].text(0.05,0.75, LeftFinal, fontsize=14, transform=plt.gcf().transFigure)
+    ax[1].text(0.55,0.25, RightFinal, fontsize=14, transform=plt.gcf().transFigure)
+
+    ax[0].imshow(img1)
+    ax[1].imshow(img2)
+    ax[0].axis('off')
+    ax[1].axis('off')
+    plt.savefig('Figures/Bears.png')
+    plt.close()
