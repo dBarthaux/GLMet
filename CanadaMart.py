@@ -2,7 +2,6 @@
 """
 Created on Sun Dec 15 10:38:58 2024
 
-@author: dundu
 """
 
 import os
@@ -33,9 +32,6 @@ import time
 # Only if errors:
 # eccodes
 
-# To do:
-# x) What is wrong with this precipitation data?
-
 # MCTAVISH	71612	7024745	45.504926	-73.579185	72.583 CWTA
 
 # Station information
@@ -56,11 +52,11 @@ if Tzone == 'Eastern Standard Time':
 
 WholeDate = datetime.today()
 
-fx.BearNecessities()
-
 Today = WholeDate.strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')
 Yesterday = (WholeDate - timedelta(days=1)).strftime('%Y-%m-%d')
+
+# fx.BearNecessities(Today2)
 
 fx.MoveYesterdaysPlots(Today2)
 fx.SundayCleaning(WholeDate)
@@ -134,9 +130,9 @@ Fig1.suptitle(f'{Name}, {Today}; Models Initialized Yesterday at 18Z or 12Z', fo
 ax1 = Fig1.subplots()
 ax1.plot(ObsData['Temperature [C]'], label='Obs', c='k', linewidth=6)
 
-# for m in ECData.keys():
-#     ax1.plot(ECData[m]['Temperature [C]'], label=m.upper(), linewidth=4,
-#              alpha=0.25)
+for m in ECData.keys():
+    ax1.plot(ECData[m]['Temperature [C]'], label=m.upper(), linewidth=4,
+             alpha=0.25)
 
 for m in USModels:
     if USData[m.split()[0]].size != 0:
@@ -155,8 +151,8 @@ ax1.legend(prop={'size':15}, ncols=2)
 ax1.set_xlabel('Time [Local, DD HH]', fontsize=18)
 ax1.set_ylabel('Temperature [C]', fontsize=18)
 plt.tight_layout()
-# plt.savefig(f'Figures/Temperature_{Code}_{Today2}.png')
-# plt.close()
+plt.savefig(f'Figures/Temperature_{Code}_{Today2}.png')
+plt.close()
 
 
 Fig2 = plt.figure(figsize=(19,9.5))
@@ -210,25 +206,4 @@ if f'HRDPS_{RadName}_{Today2}.gif' not in os.listdir('Figures'):
         fx.HRDPSRainGetter(RadName, RadLat, RadLon, UTC)
 
 
-# # Clean precipitation data before plotting
-# ObsData['Precipitation [mm]'][ObsData['Precipitation [mm]'] < 0] = 0
-
-# Fig3 = plt.figure(figsize=(14,8))
-# Fig3.suptitle(f'Precipitation at {Name}, {Today}\n Models Initialized Yesterday at 18Z or 12Z', fontsize=15)
-# ax3 = Fig3.subplots()
-
-# ax3.plot(ObsData['Precipitation [mm]'], label='Obs', c='k', linewidth=2)
-
-# for m in ECData.keys():
-#     ax3.plot(ECData[m]['Precipitation [mm]'], label=m.upper(), linewidth=1.5)
-
-# for m in USModels:
-#     if USData[m.split()[0]].size != 0:
-#         ax3.plot(USData[m.split()[0]]['Precipitation [mm]'], 
-#                  label=m.split()[0].upper(), linewidth=1.5)
-
-# ax3.xaxis.set_major_formatter(myFmt1)
-# ax3.legend(prop={'size':15}, ncols=2)
-# ax3.set_xlabel('Time [Local, DD HH]', fontsize=15)
-# ax3.set_ylabel('Precipitation [mm]', fontsize=15)
-# plt.tight_layout()
+fx.TitleCrawl(WholeDate, ObsData, TempMean)
