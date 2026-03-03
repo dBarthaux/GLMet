@@ -13,11 +13,16 @@ You will also have to uncomment the last line in CanadaMart.py.
 In CanadaMart.py, there is a section of code at the beginning that sets the information on the local ECCC weather/climate station, and the closest weather radar:
 
 > Latitude = 45.504926
+> 
 > Longitude = -73.579185
+> 
 > Code = 'CWTA'
 > Name = 'McTavish'
+> 
 > RadName = 'CASBV'
+> 
 > RadLat = 45.70628
+> 
 > RadLon = -73.85892
 
 To change it to your location, simply put the latitudes and longitudes of the weather station (first two), then the radar (RadLat, RadLon). Code and RadName must be the official names used by ECCC.
@@ -26,15 +31,22 @@ You will also likely have to amend the timezone sections (CanadaMart.py: 46-51, 
 ## Dependencies
 ### Python Packages
 Herbie - https://github.com/blaylockbk/Herbie
+
 BeautifulSoup
+
 xarray
+
 xmltodict
+
 imageio.v2
+
 cartopy
+
 PIL
 
 ### External Programs (only if using Run_Program_Weather.bat)
 JPEGView - https://sourceforge.net/projects/jpegview/
+
 AutoHotKey - https://www.autohotkey.com/
 
 ## GLMet - A Brief History and Origin Story
