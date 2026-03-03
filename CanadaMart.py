@@ -199,5 +199,6 @@ if f'HRDPS_{RadName}_{Today2}.gif' not in os.listdir('Figures'):
         fx.HRDPSRainGetter(RadName, RadLat, RadLon, UTC)
 
 
-fx.TitleCrawl(WholeDate, ObsData, TempMean)
+# fx.TitleCrawl(WholeDate, ObsData, TempMean)
+
 
