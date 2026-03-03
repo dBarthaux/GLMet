@@ -1053,74 +1053,6 @@ def HRDPSRainGetter(RadName, RadLat, RadLon, UTC):
 # 
 # =============================================================================
 
-def BearNecessities(Date):
-
-    # Replace with the raw URL of the file you want to download
-    file_url = "https://raw.githubusercontent.com/dBarthaux/GLMet/refs/heads/main/PearlsofWisdom.txt"
-    destination_path = "PearlsofWisdom.txt"
-    
-    try:
-       request.urlretrieve(file_url, destination_path)
-       print(f"File downloaded successfully to {destination_path}")
-    except Exception as e:
-       print(f"Error downloading file: {e}")
-    
-    Pearls = open('PearlsofWisdom.txt').read().splitlines()
-    
-    # Define the path to your PNG file
-    image_path1 = 'Bear1.png'
-    image_path2 = 'Bear2.png'
-    
-    # Read the image data
-    img1 = mpimg.imread(image_path1)
-    img2 = mpimg.imread(image_path2)
-
-    # Display the image
-    Fig = plt.figure(figsize=(10,9))
-    ax = Fig.subplots(nrows=1, ncols=2)
-    
-    Left = random.choice(Pearls)
-    Right = random.choice(Pearls)
-    
-    while Right == Left:
-        Right = random.choice(Pearls)
-    
-    Left = Left.split()
-    LeftFinal = ''
-    Chop = 0
-    for i in range(len(Left)):
-        LeftFinal += Left[i] + ' '
-        if i < len(Left)-1:
-            if len(LeftFinal[Chop:] + Left[i+1]) > 45:
-                LeftFinal += '\n'
-                Chop = len(LeftFinal)
-    
-    Right = Right.split()
-    RightFinal = ''
-    Chop = 0
-    for i in range(len(Right)):
-        RightFinal += Right[i] + ' '
-        if i < len(Right)-1:
-            if len(RightFinal[Chop:] + Right[i+1]) > 20:
-                RightFinal += '\n'
-                Chop = len(RightFinal)
-        
-    
-    ax[0].text(0.05,0.85, LeftFinal, fontsize=27, transform=plt.gcf().transFigure)
-    ax[1].text(0.55,0.12, RightFinal, fontsize=27, transform=plt.gcf().transFigure)
-
-    ax[0].imshow(img1)
-    ax[1].imshow(img2)
-    ax[0].axis('off')
-    ax[1].axis('off')
-    plt.savefig(f'Figures/Bears_{Date}.png')
-    plt.close()
-    
-
-# =============================================================================
-# 
-# =============================================================================
-
 def TitleCrawl(WholeDate, ObsData, TempMean):
 
     # Get news ticker text
@@ -1141,51 +1073,8 @@ def TitleCrawl(WholeDate, ObsData, TempMean):
     Crawl1 = f'Current Obs.: {ObsNowT} °C \t Current Model: {ModNowT} °C '
     Crawl2 = f'Forecast High: {ModHigh} °C \t Forecast Low: {ModLow} °C '
     
-    # Read in seminar table
-    Seminars = pd.read_csv('Seminars.csv', encoding='latin1')
-    
-    # Find first nan rows
-    DepNan = Seminars['Date Department'].isna().idxmax()
-    StuNan = Seminars['Date Student'].isna().idxmax()
-    
-    # Convert to datetimes
-    DepDates = pd.to_datetime(Seminars['Date Department'].iloc[:DepNan]) + pd.to_timedelta(11, unit='h')
-    StuDates = pd.to_datetime(Seminars['Date Student'].iloc[:StuNan]) + pd.to_timedelta(14.5, unit='h')
-    
-    # Find the next seminar speakers
-    DepDiff = (DepDates - WholeDate)
-    DepInd = DepDiff[DepDiff > pd.to_timedelta(0)].index[0]
-    DepNext = Seminars.iloc[DepInd,:2]
-    
-    Crawl3 = f'Departmental Seminar: {DepNext.iloc[1]} '
-    
-    StuDiff = (StuDates - WholeDate)
-    StuInd = StuDiff[StuDiff > pd.to_timedelta(0)].index[0]
-    StuNext = Seminars.iloc[StuInd,2:]
-    
-    if StuNext.isna().iloc[3] == False:
-        Pres1 = f'{StuNext.iloc[1]} ({StuNext.iloc[3]})'
-    else:
-        Pres1 = f'{StuNext.iloc[1]}'
-    
-    if StuNext.isna().iloc[2] == False:
-        if StuNext.isna().iloc[4] == False:
-            Pres2 = f'{StuNext.iloc[2]} ({StuNext.iloc[4]})'
-        else:
-            Pres2 = f'{StuNext.iloc[2]}'
-    else:
-        Pres2 = ''
-    
-    if Pres2 == '':
-        Crawl4 = f'\t Student Seminar: {Pres1}'
-    else:
-        Crawl4 = f'Student Seminar: {Pres1} and {Pres2}'
-    
-    from urllib import request
-    
-    
     # Read in breaking news
-    file_url = "https://gist.github.com/dBarthaux/37fd421ed248a27271172b517cbcf550/raw/90c10681a28ebe72796fa5ca96b67a5897b538d4/gistfile1.txt"
+    file_url = ""
     destination_path = "Breaking_News.txt"
     try:
        request.urlretrieve(file_url, destination_path)
@@ -1200,10 +1089,6 @@ def TitleCrawl(WholeDate, ObsData, TempMean):
     for i in range(len(BRNews)):
         FullCrawl.append(BRNews[i])
     FullCrawl.append('*')
-    FullCrawl.append('<strong>UPCOMING SEMINARS: </strong>')
-    FullCrawl.append(Crawl3)
-    FullCrawl.append(Crawl4)
-    FullCrawl.append('*')
     FullCrawl.append('<strong>WEATHER: </strong>')
     FullCrawl.append(Crawl1)
     FullCrawl.append(Crawl2)
@@ -1214,4 +1099,5 @@ def TitleCrawl(WholeDate, ObsData, TempMean):
     
     with open("TextCrawl.txt", "w") as text_file:
         text_file.write(TextCrawl)
+
         text_file.close()
