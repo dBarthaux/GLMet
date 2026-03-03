@@ -56,8 +56,6 @@ Today = WholeDate.strftime('%Y-%m-%d')
 Today2 = Today.replace('-', '')
 Yesterday = (WholeDate - timedelta(days=1)).strftime('%Y-%m-%d')
 
-# fx.BearNecessities(Today2)
-
 fx.MoveYesterdaysPlots(Today2)
 fx.SundayCleaning(WholeDate)
 
@@ -105,7 +103,6 @@ for m in ECData.keys():
 
 for m in ToRemove:
     del ECData[m]
-    
 
 for m in ECData.keys():
     ECData[m].index = pd.to_datetime(ECData[m].index)
@@ -114,13 +111,9 @@ for m in ECData.keys():
 for m in USData.keys():
     if USData[m].shape[0] > 0:
         USData[m].index = USData[m].index - pd.to_timedelta(UTC, unit='h')
-        
-Test = USData['nbm'].copy()
-        
 
 # Get the mean temperature and wind of all the models
 TempMean, WindMean = fx.MeanTandW(ECData, USData)
-
 
 # For formatting date with matplotlib
 myFmt1 = mdates.DateFormatter('%d %H')
@@ -207,3 +200,4 @@ if f'HRDPS_{RadName}_{Today2}.gif' not in os.listdir('Figures'):
 
 
 fx.TitleCrawl(WholeDate, ObsData, TempMean)
+
